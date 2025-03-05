@@ -1,0 +1,79 @@
+name: Daily Activity
+
+on:
+  schedule:
+    - cron: '10-50 7-8 * * 1-5' # Понедельник по пятницу с 07:10 до 08:50
+    - cron: '10-50 8-9 * * 0,6' # Суббота и воскресенье с 08:10 до 09:50
+
+jobs:
+  create-activity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create activity
+        run: |
+          # Случайное количество запусков от 2 до 9
+          RANDOM_RUNS=$(( RANDOM % 8 + 2 ))
+          for i in $(seq 1 $RANDOM_RUNS); do
+            # Случайная задержка от 0 до 10 минут
+            sleep $(( RANDOM % 600 ))
+            
+            # Случайный тип активности
+            RANDOM_ACTIVITY=$(( RANDOM % 5 + 1 ))
+            
+            case $RANDOM_ACTIVITY in
+              1)
+                # Коммит с случайным сообщением
+                echo "Automated activity $i" > activity.txt
+                git add activity.txt
+                git config --global user.name 'Vita689479'
+                git config --global user.email '197509342+Vita689479@users.noreply.github.com'
+                git commit -m "Automated commit $i"
+                git push origin main
+                ;;
+              2)
+                # Создание issue
+                curl -X POST \
+                  https://api.github.com/repos/Vita689479/your-repo-name/issues \
+                  -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+                  -H 'Content-Type: application/json' \
+                  -d '{"title": "Automated issue", "body": "This is an automated issue"}'
+                ;;
+              3)
+                # Создание pull request
+                git checkout -b automated-pr
+                echo "Automated PR $i" > pr.txt
+                git add pr.txt
+                git commit -m "Automated PR commit $i"
+                git push origin automated-pr
+                curl -X POST \
+                  https://api.github.com/repos/Vita689479/your-repo-name/pulls \
+                  -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+                  -H 'Content-Type: application/json' \
+                  -d '{"title": "Automated PR", "body": "This is an automated PR", "head": "automated-pr", "base": "main"}'
+                ;;
+              4)
+                # Создание комментария к issue
+                curl -X POST \
+                  https://api.github.com/repos/Vita689479/your-repo-name/issues/1/comments \
+                  -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+                  -H 'Content-Type: application/json' \
+                  -d '{"body": "Automated comment"}'
+                ;;
+              5)
+                # Коммит с случайным содержанием
+                echo "Random content $i" > random.txt
+                git add random.txt
+                git config --global user.name 'Vita689479'
+                git config --global user.email '197509342+Vita689479@users.noreply.github.com'
+                git commit -m "Random commit $i"
+                git push origin main
+                ;;
+            esac
+          done
+
+      - name: Set GITHUB_TOKEN
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
